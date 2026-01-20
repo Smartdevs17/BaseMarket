@@ -1,1 +1,41 @@
-node_modules
+# Dependencies
+node_modules/
+package-lock.json
+
+# Hardhat
+cache/
+artifacts/
+typechain-types/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Deployment
+deployment-*.json
+deployments/
+
+# Coverage
+coverage/
+coverage.json
+.coverage_artifacts/
+.coverage_cache/
+.coverage_contracts/
+
+# Misc
+*.log
+.cache/
+dist/
+build/
