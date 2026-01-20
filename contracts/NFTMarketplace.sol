@@ -1,0 +1,165 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+/**
+ * @title NFTMarketplace
+ * @dev Core marketplace for buying and selling NFTs
+ */
+contract NFTMarketplace is ReentrancyGuard, Ownable {
+    
+    struct Listing {
+        uint256 tokenId;
+        address nftContract;
+        address seller;
+        uint256 price;
+        bool isActive;
+        uint256 listedAt;
+    }
+    
+    struct Offer {
+        address buyer;
+        uint256 price;
+        uint256 expiresAt;
+        bool isActive;
+    }
+    
+    mapping(bytes32 => Listing) public listings;
+    mapping(bytes32 => Offer[]) public offers;
+    
+    uint256 public platformFee = 250; // 2.5% in basis points
+    uint256 public totalVolume;
+    uint256 public totalSales;
+    
+    event ItemListed(bytes32 indexed listingId, address indexed nftContract, uint256 indexed tokenId, address seller, uint256 price);
+    event ItemSold(bytes32 indexed listingId, address buyer, uint256 price);
+    event ListingCancelled(bytes32 indexed listingId);
+    event OfferMade(bytes32 indexed listingId, address indexed buyer, uint256 price);
+    event OfferAccepted(bytes32 indexed listingId, uint256 offerIndex);
+    
+    constructor() Ownable(msg.sender) {}
+    
+    function listItem(
+        address _nftContract,
+        uint256 _tokenId,
+        uint256 _price
+    ) external nonReentrant returns (bytes32) {
+        require(_price > 0, "Price must be > 0");
+        
+        IERC721 nft = IERC721(_nftContract);
+        require(nft.ownerOf(_tokenId) == msg.sender, "Not token owner");
+        require(nft.getApproved(_tokenId) == address(this) || 
+                nft.isApprovedForAll(msg.sender, address(this)), "Not approved");
+        
+        bytes32 listingId = keccak256(abi.encodePacked(_nftContract, _tokenId, msg.sender, block.timestamp));
+        
+        listings[listingId] = Listing({
+            tokenId: _tokenId,
+            nftContract: _nftContract,
+            seller: msg.sender,
+            price: _price,
+            isActive: true,
+            listedAt: block.timestamp
+        });
+        
+        emit ItemListed(listingId, _nftContract, _tokenId, msg.sender, _price);
+        
+        return listingId;
+    }
+    
+    function buyItem(bytes32 _listingId) external payable nonReentrant {
+        Listing storage listing = listings[_listingId];
+        require(listing.isActive, "Listing not active");
+        require(msg.value >= listing.price, "Insufficient payment");
+        
+        listing.isActive = false;
+        
+        uint256 fee = (listing.price * platformFee) / 10000;
+        uint256 sellerProceeds = listing.price - fee;
+        
+        IERC721(listing.nftContract).safeTransferFrom(listing.seller, msg.sender, listing.tokenId);
+        
+        payable(listing.seller).transfer(sellerProceeds);
+        
+        if (msg.value > listing.price) {
+            payable(msg.sender).transfer(msg.value - listing.price);
+        }
+        
+        totalVolume += listing.price;
+        totalSales++;
+        
+        emit ItemSold(_listingId, msg.sender, listing.price);
+    }
+    
+    function cancelListing(bytes32 _listingId) external {
+        Listing storage listing = listings[_listingId];
+        require(listing.seller == msg.sender, "Not seller");
+        require(listing.isActive, "Listing not active");
+        
+        listing.isActive = false;
+        
+        emit ListingCancelled(_listingId);
+    }
+    
+    function makeOffer(bytes32 _listingId, uint256 _expiresAt) external payable {
+        require(msg.value > 0, "Offer must be > 0");
+        require(_expiresAt > block.timestamp, "Invalid expiry");
+        
+        Listing memory listing = listings[_listingId];
+        require(listing.isActive, "Listing not active");
+        
+        offers[_listingId].push(Offer({
+            buyer: msg.sender,
+            price: msg.value,
+            expiresAt: _expiresAt,
+            isActive: true
+        }));
+        
+        emit OfferMade(_listingId, msg.sender, msg.value);
+    }
+    
+    function acceptOffer(bytes32 _listingId, uint256 _offerIndex) external nonReentrant {
+        Listing storage listing = listings[_listingId];
+        require(listing.seller == msg.sender, "Not seller");
+        require(listing.isActive, "Listing not active");
+        
+        Offer storage offer = offers[_listingId][_offerIndex];
+        require(offer.isActive, "Offer not active");
+        require(offer.expiresAt > block.timestamp, "Offer expired");
+        
+        listing.isActive = false;
+        offer.isActive = false;
+        
+        uint256 fee = (offer.price * platformFee) / 10000;
+        uint256 sellerProceeds = offer.price - fee;
+        
+        IERC721(listing.nftContract).safeTransferFrom(msg.sender, offer.buyer, listing.tokenId);
+        payable(msg.sender).transfer(sellerProceeds);
+        
+        totalVolume += offer.price;
+        totalSales++;
+        
+        emit OfferAccepted(_listingId, _offerIndex);
+    }
+    
+    function updatePlatformFee(uint256 _newFee) external onlyOwner {
+        require(_newFee <= 1000, "Fee too high"); // Max 10%
+        platformFee = _newFee;
+    }
+    
+    function withdrawFees() external onlyOwner {
+        payable(owner()).transfer(address(this).balance);
+    }
+    
+    function getListing(bytes32 _listingId) external view returns (Listing memory) {
+        return listings[_listingId];
+    }
+    
+    function getOffers(bytes32 _listingId) external view returns (Offer[] memory) {
+        return offers[_listingId];
+    }
+}
