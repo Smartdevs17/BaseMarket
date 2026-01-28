@@ -223,19 +223,38 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         emit OfferAccepted(_listingId, _offerIndex);
     }
     
+    /**
+     * @notice Updates the platform fee percentage
+     * @dev Only the owner can call this. Fee max is 1000 (10%).
+     * @param _newFee The new fee in basis points
+     */
     function updatePlatformFee(uint256 _newFee) external onlyOwner {
         require(_newFee <= 1000, "Fee too high"); // Max 10%
         platformFee = _newFee;
     }
     
+    /**
+     * @notice Withdraws accumulated platform fees from the contract
+     * @dev Only the owner can call this. Funds are sent to the owner's address.
+     */
     function withdrawFees() external onlyOwner {
         payable(owner()).transfer(address(this).balance);
     }
     
+    /**
+     * @notice Returns listing details for a listing ID
+     * @param _listingId The unique ID of the listing
+     * @return The Listing struct data
+     */
     function getListing(bytes32 _listingId) external view returns (Listing memory) {
         return listings[_listingId];
     }
     
+    /**
+     * @notice Returns all offers made on a listing
+     * @param _listingId The unique ID of the listing
+     * @return Array of Offer structs
+     */
     function getOffers(bytes32 _listingId) external view returns (Offer[] memory) {
         return offers[_listingId];
     }
