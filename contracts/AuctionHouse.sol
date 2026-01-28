@@ -55,9 +55,26 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
     /// @notice Platform fee in basis points (e.g., 250 = 2.5%)
     uint256 public platformFee = 250; // 2.5%
     
+    /// @notice Emitted when a new auction is listed
+    /// @param auctionId The unique ID of the auction
+    /// @param seller Address of the account selling the asset
+    /// @param startPrice Initial asking price
     event AuctionCreated(uint256 indexed auctionId, address indexed seller, uint256 startPrice);
+    
+    /// @notice Emitted when a new valid bid is placed
+    /// @param auctionId The ID of the auction
+    /// @param bidder Address of the lead bidder
+    /// @param amount The value of the bid in WEI
     event BidPlaced(uint256 indexed auctionId, address indexed bidder, uint256 amount);
+    
+    /// @notice Emitted when an auction ends successfully
+    /// @param auctionId The ID of the auction
+    /// @param winner Address of the highest bidder
+    /// @param finalPrice The closing price paid
     event AuctionFinalized(uint256 indexed auctionId, address winner, uint256 finalPrice);
+    
+    /// @notice Emitted if an auction is cancelled or reserve is not met
+    /// @param auctionId The ID of the auction
     event AuctionCancelled(uint256 indexed auctionId);
     
     constructor() Ownable(msg.sender) {
