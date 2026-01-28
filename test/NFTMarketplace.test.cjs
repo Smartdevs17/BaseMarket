@@ -151,4 +151,25 @@ describe("NFTMarketplace", function () {
       // 0.8 ETH * 0.975 = 0.78
     });
   });
+
+  describe("Admin", function () {
+    it("Should withdraw fees successfully", async function () {
+      const { marketplace, nft, seller, buyer, owner } = await loadFixture(deployFixture);
+      
+      const price = ethers.parseEther("1");
+      const tx = await marketplace.connect(seller).listItem(await nft.getAddress(), 1, price);
+      const receipt = await tx.wait();
+      const listingId = receipt.logs[0].topics[1];
+      
+      await marketplace.connect(buyer).buyItem(listingId, { value: price });
+      
+      // Fee is 2.5% = 0.025 ETH
+      const initialBalance = await ethers.provider.getBalance(owner.address);
+      
+      await marketplace.connect(owner).withdrawFees();
+      
+      const finalBalance = await ethers.provider.getBalance(owner.address);
+      expect(finalBalance).to.be.gt(initialBalance);
+    });
+  });
 });
