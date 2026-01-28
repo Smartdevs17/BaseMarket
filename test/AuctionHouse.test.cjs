@@ -75,6 +75,29 @@ describe("AuctionHouse", function () {
       const bidder1BalanceAfter = await ethers.provider.getBalance(bidder1.address);
       expect(bidder1BalanceAfter).to.be.gt(bidder1BalanceBefore);
     });
+
+    it("Should end auction successfully", async function () {
+      const { auctionHouse, nft, seller, bidder1 } = await loadFixture(deployFixture);
+      
+      await auctionHouse.connect(seller).createAuction(
+        await nft.getAddress(),
+        1,
+        0,
+        ethers.parseEther("1"),
+        ethers.parseEther("2"),
+        86400
+      );
+      
+      await auctionHouse.connect(bidder1).placeBid(1, { value: ethers.parseEther("2.5") }); // Above reserve
+      
+      await time.increase(86401);
+      
+      await expect(auctionHouse.connect(seller).endAuction(1))
+        .to.emit(auctionHouse, "AuctionEnded")
+        .withArgs(1, bidder1.address, ethers.parseEther("2.5"));
+        
+      expect(await nft.ownerOf(1)).to.equal(bidder1.address);
+    });
   });
   
   describe("Dutch Auction", function () {
