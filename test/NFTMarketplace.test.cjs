@@ -55,7 +55,7 @@ describe("NFTMarketplace", function () {
         price
       );
       const receipt = await tx.wait();
-      const listingId = receipt.logs[0].data;
+      const listingId = receipt.logs[0].topics[1];
       
       await expect(
         marketplace.connect(buyer).buyItem(listingId, { value: price })
@@ -74,7 +74,7 @@ describe("NFTMarketplace", function () {
         price
       );
       const receipt = await tx.wait();
-      const listingId = receipt.logs[0].data;
+      const listingId = receipt.logs[0].topics[1];
       
       await expect(
         marketplace.connect(buyer).buyItem(listingId, { value: ethers.parseEther("0.5") })
@@ -93,7 +93,7 @@ describe("NFTMarketplace", function () {
         price
       );
       const receipt = await tx.wait();
-      const listingId = receipt.logs[0].data;
+      const listingId = receipt.logs[0].topics[1];
       
       const offerPrice = ethers.parseEther("0.8");
       const expiresAt = Math.floor(Date.now() / 1000) + 86400;
@@ -101,6 +101,28 @@ describe("NFTMarketplace", function () {
       await expect(
         marketplace.connect(buyer).makeOffer(listingId, expiresAt, { value: offerPrice })
       ).to.emit(marketplace, "OfferMade");
+    });
+  });
+
+  describe("Cancel Listing", function () {
+    it("Should cancel listing successfully", async function () {
+      const { marketplace, nft, seller } = await loadFixture(deployFixture);
+      
+      const price = ethers.parseEther("1");
+      const tx = await marketplace.connect(seller).listItem(
+        await nft.getAddress(),
+        1,
+        price
+      );
+      const receipt = await tx.wait();
+      const listingId = receipt.logs[0].topics[1];
+      
+      await expect(marketplace.connect(seller).cancelListing(listingId))
+        .to.emit(marketplace, "ListingCancelled")
+        .withArgs(listingId);
+        
+      const listing = await marketplace.listings(listingId);
+      expect(listing.isActive).to.equal(false);
     });
   });
 });
