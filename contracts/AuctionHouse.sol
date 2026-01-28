@@ -10,8 +10,24 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  */
 contract AuctionHouse is Ownable, ReentrancyGuard {
     
+    /// @notice Types of auctions supported: English (ascending price) or Dutch (descending price)
     enum AuctionType { English, Dutch }
     
+    /**
+     * @notice Container for all auction-related data
+     * @param tokenId The ID of the NFT being auctioned
+     * @param nftContract Address of the NFT collection
+     * @param seller Address of the account selling the NFT
+     * @param auctionType The strategy (English or Dutch)
+     * @param startPrice Initial asking price
+     * @param reservePrice Minimum price seller is willing to accept
+     * @param currentBid Highest bid in English, or current price in Dutch
+     * @param currentBidder Lead bidder address
+     * @param startTime When the auction begins
+     * @param endTime When the auction expires
+     * @param isActive True if bids are still accepted
+     * @param isFinalized True if funds/NFT have been distributed
+     */
     struct Auction {
         uint256 tokenId;
         address nftContract;
@@ -27,10 +43,16 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         bool isFinalized;
     }
     
+    /// @notice Maps specific auction ID to its configuration/status
     mapping(uint256 => Auction) public auctions;
+    
+    /// @notice Tracks individual bid amounts for users per auction (for refund/tracking)
     mapping(uint256 => mapping(address => uint256)) public bids;
     
+    /// @dev Internal counter for assigning unique auction IDs
     uint256 private _auctionIdCounter;
+    
+    /// @notice Platform fee in basis points (e.g., 250 = 2.5%)
     uint256 public platformFee = 250; // 2.5%
     
     event AuctionCreated(uint256 indexed auctionId, address indexed seller, uint256 startPrice);
