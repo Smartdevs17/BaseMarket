@@ -11,11 +11,21 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract BaseNFT is ERC721, ERC721URIStorage, Ownable {
     
+    /// @dev Internal tracker for assigning unique token IDs
     uint256 private _tokenIdCounter;
     
+    /// @notice Maps token ID to the original creator address
     mapping(uint256 => address) public creators;
+    
+    /// @notice Maps token ID to secondary sale royalty percentage (in basis points)
     mapping(uint256 => uint256) public royalties; // in basis points
     
+    /**
+     * @notice Emitted when a new NFT is minted
+     * @param tokenId The unique ID of the new NFT
+     * @param creator The address that minted the NFT (owner of creators mapping entry)
+     * @param uri The IPFS or web link to metadata
+     */
     event NFTMinted(uint256 indexed tokenId, address indexed creator, string uri);
     
     constructor(string memory _name, string memory _symbol) 
@@ -25,6 +35,13 @@ contract BaseNFT is ERC721, ERC721URIStorage, Ownable {
         _tokenIdCounter = 1;
     }
     
+    /**
+     * @notice Creates a new NFT with metadata and royalty configuration
+     * @param _to Initial owner of the NFT
+     * @param _uri Metadata URI
+     * @param _royalty Percentage for secondary sales in basis points (max 1000 = 10%)
+     * @return The unique token ID assigned
+     */
     function mint(address _to, string memory _uri, uint256 _royalty) external returns (uint256) {
         require(_royalty <= 1000, "Royalty too high"); // Max 10%
         
@@ -49,6 +66,12 @@ contract BaseNFT is ERC721, ERC721URIStorage, Ownable {
         return super.supportsInterface(interfaceId);
     }
     
+    /**
+     * @notice Calculates royalty payout for a sale
+     * @param _tokenId The ID of the sold asset
+     * @param _salePrice The total closing price of the sale
+     * @return The recipient address and the calculated WEI value
+     */
     function getRoyaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256) {
         uint256 royaltyAmount = (_salePrice * royalties[_tokenId]) / 10000;
         return (creators[_tokenId], royaltyAmount);
