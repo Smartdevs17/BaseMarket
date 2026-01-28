@@ -1,7 +1,7 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers.js";
-import { time } from "@nomicfoundation/hardhat-toolbox/network-helpers.js";
+const { expect } = require("chai");
+const hre = require("hardhat");
+const { ethers } = hre;
+const { loadFixture, time } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
 describe("AuctionHouse", function () {
   async function deployFixture() {
