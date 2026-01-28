@@ -90,6 +90,14 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
     
     constructor() Ownable(msg.sender) {}
     
+    /**
+     * @notice Lists an NFT for sale in the marketplace
+     * @dev Token must be owned by the sender and approved for this contract
+     * @param _nftContract Address of the ERC721 contract
+     * @param _tokenId The unique ID of the NFT
+     * @param _price Desired selling price in WEI
+     * @return listingId The unique generated hash for the listing
+     */
     function listItem(
         address _nftContract,
         uint256 _tokenId,
@@ -118,6 +126,11 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         return listingId;
     }
     
+    /**
+     * @notice Purchases a listed NFT
+     * @dev Transfers tokens to seller and fees to contract balance
+     * @param _listingId The unique ID of the listing to purchase
+     */
     function buyItem(bytes32 _listingId) external payable nonReentrant {
         Listing storage listing = listings[_listingId];
         require(listing.isActive, "Listing not active");
@@ -142,6 +155,11 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         emit ItemSold(_listingId, msg.sender, listing.price);
     }
     
+    /**
+     * @notice Cancels an active listing
+     * @dev Only the seller can cancel their listing
+     * @param _listingId The unique ID of the listing to cancel
+     */
     function cancelListing(bytes32 _listingId) external {
         Listing storage listing = listings[_listingId];
         require(listing.seller == msg.sender, "Not seller");
