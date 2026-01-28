@@ -37,4 +37,26 @@ describe("BaseNFT", function () {
       ).to.be.revertedWith("Royalty too high");
     });
   });
+
+  describe("Royalties", function () {
+    it("Should return correct royalty info", async function () {
+      const { nft, creator } = await loadFixture(deployFixture);
+      
+      const royalty = 500; // 5%
+      await nft.connect(creator).mint(creator.address, "uri", royalty);
+      
+      const salePrice = ethers.parseEther("1");
+      const [receiver, amount] = await nft.getRoyaltyInfo(1, salePrice);
+      
+      expect(receiver).to.equal(creator.address);
+      // 1 ETH * 5% = 0.05 ETH
+      expect(amount).to.equal(ethers.parseEther("0.05"));
+    });
+
+    it("Should match EIP-2981 check", async function () {
+        const { nft } = await loadFixture(deployFixture);
+        // 0x2a55205a is the interface ID for ERC2981 (Royalty)
+        expect(await nft.supportsInterface("0x2a55205a")).to.equal(true);
+    });
+  });
 });
