@@ -125,4 +125,30 @@ describe("NFTMarketplace", function () {
       expect(listing.isActive).to.equal(false);
     });
   });
+
+  describe("Accept Offer", function () {
+    it("Should accept offer successfully", async function () {
+      const { marketplace, nft, seller, buyer } = await loadFixture(deployFixture);
+      
+      const price = ethers.parseEther("1");
+      const tx = await marketplace.connect(seller).listItem(await nft.getAddress(), 1, price);
+      const receipt = await tx.wait();
+      const listingId = receipt.logs[0].topics[1];
+      
+      const offerPrice = ethers.parseEther("0.8");
+      const expiresAt = Math.floor(Date.now() / 1000) + 86400;
+      
+      await marketplace.connect(buyer).makeOffer(listingId, expiresAt, { value: offerPrice });
+      
+      // Seller accepts offer index 0
+      await expect(marketplace.connect(seller).acceptOffer(listingId, 0))
+        .to.emit(marketplace, "OfferAccepted")
+        .withArgs(listingId, 0);
+        
+      expect(await nft.ownerOf(1)).to.equal(buyer.address);
+      
+      // Seller should receive funds (minus 2.5% fee)
+      // 0.8 ETH * 0.975 = 0.78
+    });
+  });
 });
