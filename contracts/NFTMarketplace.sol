@@ -59,10 +59,33 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
     /// @notice Total count of items sold
     uint256 public totalSales;
     
+    /// @notice Emitted when an NFT is listed for sale
+    /// @param listingId Unique ID of the listing
+    /// @param nftContract Address of the ERC721 contract
+    /// @param tokenId The unique ID of the NFT
+    /// @param seller Account listing the item
+    /// @param price Listing price in WEI
     event ItemListed(bytes32 indexed listingId, address indexed nftContract, uint256 indexed tokenId, address seller, uint256 price);
+    
+    /// @notice Emitted when a listing is purchased
+    /// @param listingId Unique ID of the listing
+    /// @param buyer Account purchasing the item
+    /// @param price Purchase price in WEI
     event ItemSold(bytes32 indexed listingId, address buyer, uint256 price);
+    
+    /// @notice Emitted when a seller cancels their listing
+    /// @param listingId Unique ID of the listing
     event ListingCancelled(bytes32 indexed listingId);
+    
+    /// @notice Emitted when a buyer makes an offer on a listing
+    /// @param listingId Unique ID of the listing
+    /// @param buyer Account making the offer
+    /// @param price Offer price in WEI
     event OfferMade(bytes32 indexed listingId, address indexed buyer, uint256 price);
+    
+    /// @notice Emitted when a seller accepts an offer
+    /// @param listingId Unique ID of the listing
+    /// @param offerIndex Index of the offer in the offers array
     event OfferAccepted(bytes32 indexed listingId, uint256 offerIndex);
     
     constructor() Ownable(msg.sender) {}
