@@ -81,6 +81,16 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         _auctionIdCounter = 1;
     }
     
+    /**
+     * @notice Lists a new NFT for auction
+     * @dev Token must be approved for the contract before listing
+     * @param _nftContract Address of the collection
+     * @param _tokenId ID of the specific NFT
+     * @param _auctionType English or Dutch strategy
+     * @param _startPrice Opening price in WEI
+     * @param _reservePrice Minimum acceptable price
+     * @param _duration Time until auction expires (in seconds)
+     */
     function createAuction(
         address _nftContract,
         uint256 _tokenId,
@@ -118,6 +128,11 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         return auctionId;
     }
     
+    /**
+     * @notice Places a bid on an active auction
+     * @dev For English auctions, must exceed current bid. For Dutch, first valid bid wins.
+     * @param _auctionId The ID of the targeted auction
+     */
     function placeBid(uint256 _auctionId) external payable nonReentrant {
         Auction storage auction = auctions[_auctionId];
         require(auction.isActive, "Auction not active");
@@ -147,6 +162,11 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         emit BidPlaced(_auctionId, msg.sender, msg.value);
     }
     
+    /**
+     * @notice Finalizes an expired auction, distributing funds/NFT
+     * @dev Anyone can trigger finalization for an expired auction. Reserve price must be met.
+     * @param _auctionId The ID of the auction to close
+     */
     function finalizeAuction(uint256 _auctionId) external nonReentrant {
         Auction storage auction = auctions[_auctionId];
         require(auction.isActive, "Auction not active");
@@ -172,6 +192,12 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         }
     }
     
+    /**
+     * @notice Calculates the current asking price
+     * @dev English returns highest bid. Dutch returns time-decreased price.
+     * @param _auctionId The ID of the auction
+     * @return Current price in WEI
+     */
     function getCurrentPrice(uint256 _auctionId) public view returns (uint256) {
         Auction memory auction = auctions[_auctionId];
         
@@ -193,6 +219,11 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         }
     }
     
+    /**
+     * @notice Cancels an auction before any bids are placed
+     * @dev Only the seller can cancel.
+     * @param _auctionId The ID of the auction to cancel
+     */
     function cancelAuction(uint256 _auctionId) external {
         Auction storage auction = auctions[_auctionId];
         require(auction.seller == msg.sender, "Not seller");
