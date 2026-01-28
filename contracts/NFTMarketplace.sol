@@ -12,6 +12,15 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  */
 contract NFTMarketplace is ReentrancyGuard, Ownable {
     
+    /**
+     * @notice Data structure representing an NFT listing
+     * @param tokenId The unique ID of the NFT
+     * @param nftContract Address of the ERC721 contract
+     * @param seller Address of the account selling the NFT
+     * @param price Listing price in WEI
+     * @param isActive Whether the listing is currently active
+     * @param listedAt Timestamp when the item was listed
+     */
     struct Listing {
         uint256 tokenId;
         address nftContract;
@@ -21,6 +30,13 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         uint256 listedAt;
     }
     
+    /**
+     * @notice Data structure representing a purchase offer
+     * @param buyer Address of the account making the offer
+     * @param price Offer price in WEI (escrowed in the contract)
+     * @param expiresAt Timestamp when the offer expired
+     * @param isActive Whether the offer is still valid/active
+     */
     struct Offer {
         address buyer;
         uint256 price;
@@ -28,11 +44,19 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         bool isActive;
     }
     
+    /// @notice Maps a unique listing hash to listing data
     mapping(bytes32 => Listing) public listings;
+    
+    /// @notice Maps a listing ID to an array of offers
     mapping(bytes32 => Offer[]) public offers;
     
-    uint256 public platformFee = 250; // 2.5% in basis points
+    /// @notice Platform fee in basis points (e.g. 250 = 2.5%)
+    uint256 public platformFee = 250;
+    
+    /// @notice Cumulative volume of all sales in WEI
     uint256 public totalVolume;
+    
+    /// @notice Total count of items sold
     uint256 public totalSales;
     
     event ItemListed(bytes32 indexed listingId, address indexed nftContract, uint256 indexed tokenId, address seller, uint256 price);
