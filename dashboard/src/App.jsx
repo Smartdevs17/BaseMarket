@@ -2,6 +2,21 @@ import React from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import NFTCard from './components/NFTCard';
+import AuctionItem from './components/AuctionItem';
+
+const MOCK_NFTS = [
+  { id: 1, tokenId: '1024', name: 'Ethereal Fragment #1', price: '0.25', seller: '0x1234...5678', tag: '3D Art' },
+  { id: 2, tokenId: '1025', name: 'Digital Genesis #8', price: '0.42', seller: '0x8888...9999', tag: 'Abstract' },
+  { id: 3, tokenId: '1026', name: 'Base Pixel #12', price: '0.15', seller: '0xAAAA...BBBB', tag: 'Pixel' },
+  { id: 4, tokenId: '1027', name: 'Sonic Wave #44', price: '0.88', seller: '0xCCCC...DDDD', tag: 'Motion' },
+];
+
+const MOCK_AUCTIONS = [
+  { id: 1, name: 'Abstract #101', timeLeft: '2h 45m', currentBid: '0.42' },
+  { id: 2, name: 'Abstract #102', timeLeft: '1h 12m', currentBid: '1.15' },
+  { id: 3, name: 'Abstract #103', timeLeft: '14m 30s', currentBid: '0.89' },
+];
 
 function App() {
   return (
@@ -10,7 +25,7 @@ function App() {
       <div className="flex-1 flex flex-col min-h-screen">
         <Header />
         <main className="main-content">
-          <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
+          <div className="max-w-7xl mx-auto space-y-8 animate-fade-in p-8">
             <div className="flex justify-between items-end">
               <div>
                 <h2 className="text-4xl font-black text-white tracking-tight">Marketplace Overview</h2>
@@ -29,13 +44,13 @@ function App() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 h-[400px] bg-gradient-to-br from-accent-primary/20 to-bg-secondary border border-border-subtle rounded-3xl p-8 relative overflow-hidden group">
+              <div className="md:col-span-2 h-[450px] bg-gradient-to-br from-accent-primary/20 to-bg-secondary border border-border-subtle rounded-3xl p-8 relative overflow-hidden group">
                 <div className="relative z-10 h-full flex flex-col justify-between">
                   <div>
                     <span className="bg-accent-primary/20 text-accent-primary text-[10px] font-black uppercase px-2 py-1 rounded">Featured Collection</span>
                     <h3 className="text-5xl font-black text-white mt-4 leading-tight">Base Punks <br />Genesis Drop</h3>
                   </div>
-                  <button className="w-fit bg-white text-bg-primary px-8 py-3 rounded-xl font-black hover:scale-105 transition-all shadow-xl shadow-white/10">
+                  <button className="w-fit bg-white text-bg-primary px-10 py-4 rounded-2xl font-black hover:scale-105 transition-all shadow-xl shadow-white/10">
                     Explore Drop
                   </button>
                 </div>
@@ -44,44 +59,27 @@ function App() {
 
               <div className="bg-bg-secondary border border-border-subtle rounded-3xl p-8 flex flex-col justify-between shadow-xl">
                 <div>
-                  <h4 className="text-white font-bold text-lg mb-2">Active Auctions</h4>
-                  <p className="text-text-secondary text-sm">Real-time bidding on top-tier digital collectibles.</p>
+                  <h4 className="text-white font-bold text-lg mb-2 tracking-tight">Active Auctions</h4>
+                  <p className="text-text-secondary text-sm">Real-time bidding on top-tier assets.</p>
                 </div>
-                <div className="space-y-4 mt-8">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-bg-tertiary/50 border border-border-subtle rounded-xl">
-                      <div className="w-10 h-10 bg-bg-tertiary rounded-lg"></div>
-                      <div className="flex-1 ml-3">
-                        <p className="text-xs font-bold text-white uppercase">Abstract #{100 + i}</p>
-                        <p className="text-[10px] text-text-tertiary font-mono">2h 45m left</p>
-                      </div>
-                      <span className="text-xs font-black text-accent-primary">0.42 ETH</span>
-                    </div>
+                <div className="space-y-3 mt-8">
+                  {MOCK_AUCTIONS.map((auction) => (
+                    <AuctionItem key={auction.id} auction={auction} />
                   ))}
                 </div>
-                <button className="w-full mt-6 text-xs font-bold text-text-tertiary hover:text-white transition-colors underline">
+                <button className="w-full mt-6 text-xs font-bold text-text-tertiary hover:text-white transition-colors underline underline-offset-4">
                   View All Auctions
                 </button>
               </div>
             </div>
 
-            {/* Placeholder for NFT Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-bg-secondary border border-border-subtle rounded-2xl overflow-hidden group hover:border-accent-primary/50 transition-all cursor-pointer">
-                  <div className="aspect-square bg-bg-tertiary relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/50 to-transparent"></div>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs font-bold text-text-tertiary uppercase">Digital Art</p>
-                    <h5 className="text-white font-bold mt-1">Ethereal Fragment #{i}</h5>
-                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-border-subtle">
-                      <span className="text-sm font-black text-white">0.25 ETH</span>
-                      <button className="text-[10px] font-black uppercase bg-accent-primary/10 text-accent-primary px-3 py-1 rounded-lg">Buy Now</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="pt-8">
+              <h4 className="text-white font-black text-2xl mb-8 tracking-tight">Explore Items</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {MOCK_NFTS.map((nft) => (
+                  <NFTCard key={nft.id} nft={nft} />
+                ))}
+              </div>
             </div>
           </div>
         </main>
