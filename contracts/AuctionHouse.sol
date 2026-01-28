@@ -152,9 +152,23 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         } else {
             // Dutch auction - first bid wins
             require(msg.value >= getCurrentPrice(_auctionId), "Bid too low");
+            
             auction.currentBid = msg.value;
             auction.currentBidder = msg.sender;
             auction.isActive = false;
+            auction.isFinalized = true;
+
+            // Distribute immediately
+            uint256 fee = (msg.value * platformFee) / 10000;
+            uint256 sellerProceeds = msg.value - fee;
+            
+            // Transfer NFT
+            IERC721(auction.nftContract).safeTransferFrom(auction.seller, msg.sender, auction.tokenId);
+            
+            payable(auction.seller).transfer(sellerProceeds);
+            
+            emit AuctionFinalized(_auctionId, msg.sender, msg.value);
+            return;
         }
         
         bids[_auctionId][msg.sender] = msg.value;
@@ -179,6 +193,9 @@ contract AuctionHouse is Ownable, ReentrancyGuard {
         if (auction.currentBidder != address(0) && auction.currentBid >= auction.reservePrice) {
             uint256 fee = (auction.currentBid * platformFee) / 10000;
             uint256 sellerProceeds = auction.currentBid - fee;
+            
+            // Transfer NFT
+            IERC721(auction.nftContract).safeTransferFrom(auction.seller, auction.currentBidder, auction.tokenId);
             
             payable(auction.seller).transfer(sellerProceeds);
             

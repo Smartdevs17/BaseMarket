@@ -92,8 +92,8 @@ describe("AuctionHouse", function () {
       
       await time.increase(86401);
       
-      await expect(auctionHouse.connect(seller).endAuction(1))
-        .to.emit(auctionHouse, "AuctionEnded")
+      await expect(auctionHouse.connect(seller).finalizeAuction(1))
+        .to.emit(auctionHouse, "AuctionFinalized")
         .withArgs(1, bidder1.address, ethers.parseEther("2.5"));
         
       expect(await nft.ownerOf(1)).to.equal(bidder1.address);
@@ -134,6 +134,27 @@ describe("AuctionHouse", function () {
       const midPrice = await auctionHouse.getCurrentPrice(1);
       expect(midPrice).to.be.lt(ethers.parseEther("2"));
       expect(midPrice).to.be.gt(ethers.parseEther("1"));
+    });
+
+    it("Should buy dutch auction successfully", async function () {
+      const { auctionHouse, nft, seller, bidder1 } = await loadFixture(deployFixture);
+      
+      await auctionHouse.connect(seller).createAuction(
+        await nft.getAddress(),
+        1,
+        1,
+        ethers.parseEther("2"),
+        ethers.parseEther("1"),
+        86400
+      );
+      
+      await time.increase(43200); // 12 hours
+      const price = await auctionHouse.getCurrentPrice(1);
+      
+      await expect(auctionHouse.connect(bidder1).placeBid(1, { value: price }))
+        .to.emit(auctionHouse, "AuctionFinalized");
+        
+      expect(await nft.ownerOf(1)).to.equal(bidder1.address);
     });
   });
 });
