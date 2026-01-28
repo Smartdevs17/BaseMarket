@@ -170,6 +170,12 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         emit ListingCancelled(_listingId);
     }
     
+    /**
+     * @notice Makes a cash offer for a listing
+     * @dev Funds are sent with the call and held in the contract balance
+     * @param _listingId The unique ID of the listing
+     * @param _expiresAt Timestamp when the offer expires
+     */
     function makeOffer(bytes32 _listingId, uint256 _expiresAt) external payable {
         require(msg.value > 0, "Offer must be > 0");
         require(_expiresAt > block.timestamp, "Invalid expiry");
@@ -187,6 +193,12 @@ contract NFTMarketplace is ReentrancyGuard, Ownable {
         emit OfferMade(_listingId, msg.sender, msg.value);
     }
     
+    /**
+     * @notice Accepts an offer made by a buyer
+     * @dev Transfers NFT to buyer and funds to seller minus platform fee
+     * @param _listingId The unique ID of the listing
+     * @param _offerIndex The index of the offer to accept
+     */
     function acceptOffer(bytes32 _listingId, uint256 _offerIndex) external nonReentrant {
         Listing storage listing = listings[_listingId];
         require(listing.seller == msg.sender, "Not seller");
