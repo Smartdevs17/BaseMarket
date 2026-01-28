@@ -171,5 +171,14 @@ describe("NFTMarketplace", function () {
       const finalBalance = await ethers.provider.getBalance(owner.address);
       expect(finalBalance).to.be.gt(initialBalance);
     });
+
+    it("Should update platform fee successfully", async function () {
+      const { marketplace, owner } = await loadFixture(deployFixture);
+      
+      await expect(marketplace.connect(owner).updatePlatformFee(500)) // 5%
+        .to.not.be.reverted;
+        
+      expect(await marketplace.platformFee()).to.equal(500);
+    });
   });
 });
