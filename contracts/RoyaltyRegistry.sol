@@ -9,25 +9,52 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract RoyaltyRegistry is Ownable {
     
+    /**
+     * @notice Configuration for royalty payments
+     * @param recipient The address that receives the royalty
+     * @param amount The fee in basis points (e.g., 500 = 5%)
+     */
     struct RoyaltyInfo {
         address recipient;
         uint256 amount; // Basis points (e.g., 500 = 5%)
     }
     
-    // Collection Address -> Token ID -> RoyaltyInfo
+    /// @notice Maps collection to specific token IDs for per-NFT royalties
     mapping(address => mapping(uint256 => RoyaltyInfo)) public tokenRoyalties;
     
-    // Collection Address -> Default RoyaltyInfo
+    /// @notice Maps collection to a default royalty configuration for all its NFTs
     mapping(address => RoyaltyInfo) public collectionRoyalties;
     
-    // Max royalty cap (e.g., 10%)
+    /// @notice The maximum allowed royalty (10% in basis points)
     uint256 public constant MAX_ROYALTY = 1000;
     
+    /**
+     * @notice Emitted when a specific NFT royalty is set
+     * @param collection The address of the NFT contract
+     * @param tokenId The ID of the specific token
+     * @param recipient The address receiving royalties
+     * @param amount The fee in basis points
+     */
     event RoyaltySet(address indexed collection, uint256 indexed tokenId, address recipient, uint256 amount);
+    
+    /**
+     * @notice Emitted when a collection-wide default royalty is set
+     * @param collection The address of the NFT contract
+     * @param recipient The address receiving royalties
+     * @param amount The fee in basis points
+     */
     event DefaultRoyaltySet(address indexed collection, address recipient, uint256 amount);
     
     constructor() Ownable(msg.sender) {}
     
+    /**
+     * @notice Registers royalty details for a specific NFT
+     * @dev Should be restricted to creator/owner in production
+     * @param _collection The address of the NFT contract
+     * @param _tokenId The specific token ID
+     * @param _recipient The address to receive funds
+     * @param _amount Fee in basis points (max 1000)
+     */
     function setRoyalty(
         address _collection,
         uint256 _tokenId,
@@ -43,6 +70,12 @@ contract RoyaltyRegistry is Ownable {
         emit RoyaltySet(_collection, _tokenId, _recipient, _amount);
     }
     
+    /**
+     * @notice Sets a fallback royalty for all tokens in a collection
+     * @param _collection The address of the NFT contract
+     * @param _recipient The default address to receive funds
+     * @param _amount Default fee in basis points
+     */
     function setDefaultRoyalty(
         address _collection,
         address _recipient,
@@ -57,6 +90,15 @@ contract RoyaltyRegistry is Ownable {
         emit DefaultRoyaltySet(_collection, _recipient, _amount);
     }
     
+    /**
+     * @notice Returns the royalty payout details for a specific sale
+     * @dev Prioritizes token-specific royalty, falls back to collection default
+     * @param _collection The address of the NFT contract
+     * @param _tokenId The ID of the token being sold
+     * @param _salePrice The total closing price of the sale
+     * @return recipient The address that should receive the royalty
+     * @return royaltyAmount The calculated WEI amount of the royalty
+     */
     function getRoyalty(address _collection, uint256 _tokenId, uint256 _salePrice) 
         external 
         view 
